@@ -190,3 +190,17 @@ try:
 except requests.RequestException as error:
     print("\nAPI Request Error:")
     print(error)
+
+# Compare CSV Data with API Data
+csv_ids = set(df_clean["id"].dropna().astype(str).str.strip())
+api_ids = api_df["id"].astype("string").str.strip()
+
+api_df["found_in_csv"] = api_ids.isin(csv_ids)
+
+print("\nAPI and CSV Comparison:")
+print("Total API Records:", len(api_df))
+print("API Records Found in CSV:", api_df["found_in_csv"].sum())
+print("API Records Not Found in CSV:", (~api_df["found_in_csv"]).sum())
+
+print("\nSample Comparison:")
+print(api_df[["id", "name", "found_in_csv"]].head(10))
