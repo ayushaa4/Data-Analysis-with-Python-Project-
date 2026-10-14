@@ -3,19 +3,20 @@
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import requests
 
 
 # Load Dataset
 
 df = pd.read_csv("breweries.csv")
 
-print("First 5 rows:")
+print("First 5 Rows:")
 print(df.head())
 
-print("\nDataset shape:")
+print("\nDataset Shape:")
 print(df.shape)
 
-print("\nColumn names:")
+print("\nColumn Names:")
 print(df.columns.tolist())
 
 
@@ -38,16 +39,13 @@ print(df.duplicated().sum())
 
 df_clean = df.copy()
 
-# Remove duplicate rows
 df_clean = df_clean.drop_duplicates()
 
-# Remove extra spaces from text columns
 text_columns = df_clean.select_dtypes(include="object").columns
 
 for col in text_columns:
     df_clean[col] = df_clean[col].str.strip()
 
-# Replace empty strings with missing values
 df_clean[text_columns] = df_clean[text_columns].replace(
     "", pd.NA
 )
@@ -108,3 +106,87 @@ plt.ylabel("Number of Records")
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
+
+
+# Analyze Brewery Types by Country
+
+print("\nBrewery Types by Country:")
+
+type_country = pd.crosstab(
+    df_clean["country"],
+    df_clean["brewery_type"]
+)
+
+print(type_country.head(10))
+
+
+# Analyze Missing Location Information
+
+print("\nMissing City Information:")
+print(df_clean["city"].isnull().sum())
+
+print("\nMissing Country Information:")
+print(df_clean["country"].isnull().sum())
+
+print("\nMissing Latitude Information:")
+print(df_clean["latitude"].isnull().sum())
+
+print("\nMissing Longitude Information:")
+print(df_clean["longitude"].isnull().sum())
+
+
+# Analyze Website Information
+
+website_count = df_clean["website_url"].notnull().sum()
+no_website_count = df_clean["website_url"].isnull().sum()
+
+print("\nBreweries with Website Information:")
+print(website_count)
+
+print("\nBreweries without Website Information:")
+print(no_website_count)
+
+
+# Visualize Website Information
+
+website_data = pd.Series({
+    "Has Website": website_count,
+    "No Website": no_website_count
+})
+
+website_data.plot(kind="bar", figsize=(7, 4))
+
+plt.title("Breweries with and without Websites")
+plt.xlabel("Website Information")
+plt.ylabel("Number of Breweries")
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+
+
+# Get Data from API
+
+url = "https://api.openbrewerydb.org/v1/breweries"
+
+try:
+    response = requests.get(url, timeout=30)
+
+    print("\nAPI Status Code:")
+    print(response.status_code)
+
+    if response.status_code == 200:
+        api_data = response.json()
+        api_df = pd.DataFrame(api_data)
+
+        print("\nFirst 5 API Records:")
+        print(api_df.head())
+
+        print("\nAPI Dataset Shape:")
+        print(api_df.shape)
+
+    else:
+        print("Failed to retrieve data from API.")
+
+except requests.RequestException as error:
+    print("\nAPI Request Error:")
+    print(error)
